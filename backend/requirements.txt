@@ -3,3 +3,7 @@ groq
 google-generativeai
 exa-py
 tavily-python
+fastapi
+python-dotenv
+pydantic
+requests
