@@ -4,7 +4,7 @@ import requests
 import streamlit as st
 
 
-API_BASE_URL = "https://bidgenius-ai.streamlit.app/"
+API_BASE_URL = "https://bidgenius-ai.vercel.app/"
 COMPANY_TYPES = [
     "Construction / Civil",
     "IT Services",
