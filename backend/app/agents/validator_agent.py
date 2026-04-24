@@ -32,6 +32,14 @@ NEWS_SIGNALS = [
     r'\bnews\s+desk\b',
 ]
 
+PRESS_RELEASE_SIGNALS = [
+    r'\bpress\s+release\b',
+    r'\bpress\s+information\s+bureau\b',
+    r'\bposted\s+on:?\s+\d',
+    r'\bpib\s+delhi\b',
+    r'\bpib\b.*\bgov\.in\b',
+]
+
 FINANCIAL_REPORT_SIGNALS = [
     r'\bbalance\s+sheet\b',
     r'\bprofit\s+and\s+loss\b',
@@ -75,6 +83,18 @@ def _is_likely_tender(text):
     news_hits = sum(1 for p in NEWS_SIGNALS if re.search(p, lower))
     if news_hits >= 2:
         return False, "News article (no tender signals)"
+
+    # Press releases ABOUT tenders contain tender words but are not actionable
+    press_hits = sum(1 for p in PRESS_RELEASE_SIGNALS if re.search(p, lower))
+    if press_hits >= 2:
+        # Check for actionable tender content (EMD submission, bid forms, etc.)
+        actionable = re.search(
+            r'(submit\s+(your\s+)?bid|earnest\s+money\s+deposit.*shall|'
+            r'last\s+date\s+(of|for)\s+submission|bid\s+document\s+fee|'
+            r'notice\s+inviting\s+tender)', lower
+        )
+        if not actionable:
+            return False, f"Press release / announcement ({press_hits} signals, not an actionable tender)"
 
     fin_hits = sum(1 for p in FINANCIAL_REPORT_SIGNALS if re.search(p, lower))
     if fin_hits >= 3:

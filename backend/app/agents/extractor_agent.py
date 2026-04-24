@@ -272,7 +272,7 @@ def _llm_call(text, missing_fields, target_keyword, mode="relevance"):
     try:
         from app.llm.llm_router import generate
 
-        chunk = smart_chunk(text, max_size=3500)
+        chunk = smart_chunk(text, max_size=8000)
 
         # Only ask for fields that are actually missing
         critical_missing = [f for f in missing_fields if f in _CRITICAL]

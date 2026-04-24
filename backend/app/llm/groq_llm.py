@@ -35,7 +35,7 @@ def groq_generate(prompt: str) -> str | None:
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=1500,
+                max_tokens=4096,
                 temperature=0.3,
             )
             return response.choices[0].message.content
