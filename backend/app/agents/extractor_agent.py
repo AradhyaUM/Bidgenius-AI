@@ -157,24 +157,15 @@ SECTION_HEADERS = [
 
 
 # ─────────────────────────────────────────────
-# SMART CHUNKING
-# Extracts the 4000 most relevant chars instead of sending 40K to LLM
+# TEXT PREPARATION FOR LLM
+# With paid Groq (128K context), send full document up to 25K chars
 # ─────────────────────────────────────────────
-def smart_chunk(text, max_size=4000):
+def smart_chunk(text, max_size=25000):
     if len(text) <= max_size:
         return text
-    chunks = [text[:2500]]
-    for header in SECTION_HEADERS:
-        idx = text.lower().find(header.lower())
-        if idx == -1:
-            continue
-        chunk = text[max(0, idx-100): min(len(text), idx+800)]
-        if chunk not in chunks:
-            chunks.append(chunk)
-        if sum(len(c) for c in chunks) > max_size:
-            break
-    chunks.append(text[-1200:])
-    return "\n---\n".join(chunks)[:max_size]
+    # For very long documents, take first 20K + last 5K to capture
+    # both header/summary info and appendix/schedule details
+    return text[:20000] + "\n\n--- [DOCUMENT CONTINUES] ---\n\n" + text[-5000:]
 
 
 # ─────────────────────────────────────────────
@@ -251,13 +242,13 @@ def _find(text, keywords, vtype):
 # ─────────────────────────────────────────────
 # LLM EXTRACTION
 # Called in two modes:
-#   mode="relevance"  — quick check + fill missing fields (uses smart_chunk)
+#   mode="relevance"  — quick check + fill missing fields (full document)
 #   mode="full"       — when regex got almost nothing (fallback only)
 #
-# Token budget per call:
-#   smart_chunk = ~1000 tokens
-#   prompt overhead = ~300 tokens
-#   Total input ≈ 1300 tokens → well within Groq free limits
+# Token budget per call (paid Groq, 128K context):
+#   Full document up to 25K chars ≈ 6K tokens
+#   Prompt overhead ≈ 300 tokens
+#   Total input ≈ 6300 tokens — well within paid limits
 # ─────────────────────────────────────────────
 _CRITICAL = {
     "EMD", "Tender Fee", "Estimated Cost",
@@ -272,7 +263,7 @@ def _llm_call(text, missing_fields, target_keyword, mode="relevance"):
     try:
         from app.llm.llm_router import generate
 
-        chunk = smart_chunk(text, max_size=8000)
+        chunk = smart_chunk(text, max_size=25000)
 
         # Only ask for fields that are actually missing
         critical_missing = [f for f in missing_fields if f in _CRITICAL]
