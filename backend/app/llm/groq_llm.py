@@ -4,64 +4,45 @@ import time
 
 logger = logging.getLogger("bidgenius.groq")
 
-GROQ_KEYS = [
-    k for k in [
-        os.getenv("GROQ_API_KEY_1"),
-        os.getenv("GROQ_API_KEY_2"),
-        os.getenv("GROQ_API_KEY_3"),
-        os.getenv("GROQ_API_KEY_4"),
-        os.getenv("GROQ_API_KEY_5"),
-        os.getenv("GROQ_API_KEY_6"),
-        os.getenv("GROQ_API_KEY_7"),
-        os.getenv("GROQ_API_KEY_8"),
-        os.getenv("GROQ_API_KEY_9"),
-        os.getenv("GROQ_API_KEY_10"),
-        os.getenv("GROQ_API_KEY_11"),
-        os.getenv("GROQ_API_KEY_12"),
-        os.getenv("GROQ_API_KEY_13"),
-        os.getenv("GROQ_API_KEY_14"),
-        os.getenv("GROQ_API_KEY_15"),
-        os.getenv("GROQ_API_KEY_16"),
-        os.getenv("GROQ_API_KEY_17"),
-        os.getenv("GROQ_API_KEY_18"),
-    ]
-    if k
-]
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_KEYS:
-    logger.warning("No GROQ_API_KEY_* found in environment — LLM calls will fail")
+if not GROQ_API_KEY:
+    logger.warning("GROQ_API_KEY not found in environment — LLM calls will fail")
 
-_key_index = 0
-
-def _rotate():
-    global _key_index
-    _key_index = (_key_index + 1) % len(GROQ_KEYS)
-    logger.info(f"Rotated to Groq key slot {_key_index + 1}/{len(GROQ_KEYS)}")
 
 def groq_generate(prompt: str) -> str | None:
-    from groq import Groq, RateLimitError
+    if not GROQ_API_KEY:
+        logger.error("No GROQ_API_KEY set")
+        return None
 
-    for attempt in range(len(GROQ_KEYS)):
+    try:
+        from groq import Groq, RateLimitError
+
+        client = Groq(api_key=GROQ_API_KEY)
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1500,
+            temperature=0.3,
+        )
+        return response.choices[0].message.content
+
+    except RateLimitError:
+        logger.warning("Groq rate limit hit — waiting 5s and retrying")
+        time.sleep(5)
         try:
-            client = Groq(api_key=GROQ_KEYS[_key_index])
+            client = Groq(api_key=GROQ_API_KEY)
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=1500,
                 temperature=0.3,
             )
-            time.sleep(2)
             return response.choices[0].message.content
-
-        except RateLimitError:
-            logger.warning(f"Rate limit on key slot {_key_index + 1} — rotating")
-            _rotate()
-            time.sleep(2)
-            continue
-
         except Exception as e:
-            logger.error(f"Groq error (key slot {_key_index + 1}): {e}")
-            _rotate()
-            break
+            logger.error(f"Groq retry failed: {e}")
+            return None
 
-    return None
+    except Exception as e:
+        logger.error(f"Groq error: {e}")
+        return None

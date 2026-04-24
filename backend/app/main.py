@@ -28,7 +28,7 @@ async def startup():
     logger.info("=" * 50)
     logger.info("BidGenius API started")
     logger.info(f"  TAVILY : {'set' if os.getenv('TAVILY_API_KEY') else 'MISSING'}")
-    logger.info(f"  GROQ   : {'set' if os.getenv('GROQ_API_KEY_1') else 'MISSING'}")
+    logger.info(f"  GROQ   : {'set' if os.getenv('GROQ_API_KEY') else 'MISSING'}")
     logger.info(f"  EXA    : {'set' if os.getenv('EXA_API_KEY') else 'not set (optional)'}")
     logger.info("=" * 50)
 
@@ -102,7 +102,7 @@ def health():
         "status": "ok" if not errors else "degraded",
         "errors": errors,
         "tavily": bool(os.getenv("TAVILY_API_KEY")),
-        "groq":   bool(os.getenv("GROQ_API_KEY_1")),
+        "groq":   bool(os.getenv("GROQ_API_KEY")),
         "exa":    bool(os.getenv("EXA_API_KEY")),
     }
 
