@@ -63,14 +63,27 @@ def _is_likely_tender(text):
     Returns (keep: bool, reason: str)
     
     Logic:
+    - Check press releases FIRST (they often contain tender keywords like "bid")
     - If ANY tender signal found → keep (return True immediately)
     - If 3+ court signals with NO tender signal → reject
-    - If 3+ financial report signals with NO tender signal → reject
     - Otherwise → keep (benefit of the doubt)
     """
     lower = text[:8000].lower()
 
-    # Check for tender signals first — if found, immediately keep
+    # Check press releases FIRST — before tender signals
+    # PIB articles about tenders contain "bid"/"bidder" but are not actionable
+    press_hits = sum(1 for p in PRESS_RELEASE_SIGNALS if re.search(p, lower))
+    if press_hits >= 2:
+        # Only keep if it has ACTIONABLE tender content (not just mentions)
+        actionable = re.search(
+            r'(submit\s+(your\s+)?bid|earnest\s+money\s+deposit.*shall|'
+            r'last\s+date\s+(of|for)\s+submission|bid\s+document\s+fee|'
+            r'notice\s+inviting\s+tender)', lower
+        )
+        if not actionable:
+            return False, f"Press release / announcement ({press_hits} signals, not an actionable tender)"
+
+    # Check for tender signals — if found, keep
     for pat in TENDER_SIGNALS:
         if re.search(pat, lower):
             return True, "Tender signal found"
@@ -83,18 +96,6 @@ def _is_likely_tender(text):
     news_hits = sum(1 for p in NEWS_SIGNALS if re.search(p, lower))
     if news_hits >= 2:
         return False, "News article (no tender signals)"
-
-    # Press releases ABOUT tenders contain tender words but are not actionable
-    press_hits = sum(1 for p in PRESS_RELEASE_SIGNALS if re.search(p, lower))
-    if press_hits >= 2:
-        # Check for actionable tender content (EMD submission, bid forms, etc.)
-        actionable = re.search(
-            r'(submit\s+(your\s+)?bid|earnest\s+money\s+deposit.*shall|'
-            r'last\s+date\s+(of|for)\s+submission|bid\s+document\s+fee|'
-            r'notice\s+inviting\s+tender)', lower
-        )
-        if not actionable:
-            return False, f"Press release / announcement ({press_hits} signals, not an actionable tender)"
 
     fin_hits = sum(1 for p in FINANCIAL_REPORT_SIGNALS if re.search(p, lower))
     if fin_hits >= 3:

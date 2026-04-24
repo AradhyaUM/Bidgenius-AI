@@ -4,25 +4,25 @@ import time
 
 logger = logging.getLogger("bidgenius.groq")
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-if not GROQ_API_KEY:
-    logger.warning("GROQ_API_KEY not found in environment — LLM calls will fail")
-
 
 def groq_generate(prompt: str) -> str | None:
-    if not GROQ_API_KEY:
+    # Read key EVERY call — not at import time.
+    # On Railway, env vars are injected after the module first loads,
+    # so caching at module level causes "MISSING" forever.
+    api_key = os.getenv("GROQ_API_KEY")
+
+    if not api_key:
         logger.error("No GROQ_API_KEY set")
         return None
 
     try:
         from groq import Groq, RateLimitError
 
-        client = Groq(api_key=GROQ_API_KEY)
+        client = Groq(api_key=api_key)
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1500,
+            max_tokens=4096,
             temperature=0.3,
         )
         return response.choices[0].message.content
@@ -31,7 +31,7 @@ def groq_generate(prompt: str) -> str | None:
         logger.warning("Groq rate limit hit — waiting 5s and retrying")
         time.sleep(5)
         try:
-            client = Groq(api_key=GROQ_API_KEY)
+            client = Groq(api_key=api_key)
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],

@@ -81,7 +81,6 @@ def _normalize_100(score_5: float) -> int:
 async def evaluate_bid(
     tender_summary: str,
     bid_proposal: str,
-    model_name: str = "gemini"
 ) -> Dict:
     """Judge Agent: evaluates proposal quality"""
 
