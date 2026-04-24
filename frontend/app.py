@@ -1,10 +1,9 @@
 import html
-
 import requests
 import streamlit as st
 
 
-API_BASE_URL = "https://bidgenius-ai.vercel.app/"
+API_BASE_URL = "https://bidgenius-ai.vercel.app/api"
 COMPANY_TYPES = [
     "Construction / Civil",
     "IT Services",
@@ -97,6 +96,22 @@ def inject_styles():
         [data-testid="stSidebar"] * {
             color: var(--text);
         }
+
+        /* --- INPUT TEXT COLOR FIX --- */
+        /* Forces the text you type into inputs and textareas to be black */
+        .stTextInput > div > div > input,
+        .stTextArea textarea,
+        .stNumberInput input {
+            color: #000000 !important;
+            background: #ffffff !important;
+        }
+        
+        /* Ensures selectbox text is also legible */
+        .stSelectbox [data-baseweb="select"] > div {
+            color: #000000 !important;
+            background: #ffffff !important;
+        }
+        /* --------------------------- */
 
         .block-container {
             padding-top: 2rem;
@@ -537,22 +552,6 @@ def inject_styles():
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 18px;
-        }
-
-        .stTextInput > div > div > input,
-        .stTextArea textarea,
-        .stNumberInput input {
-            background: rgba(255, 255, 255, 0.055);
-            color: var(--text);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-        }
-
-        .stSelectbox [data-baseweb="select"] > div,
-        .stMultiSelect [data-baseweb="select"] > div {
-            background: rgba(255, 255, 255, 0.055);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
         }
 
         .stRadio > div {

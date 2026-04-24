@@ -5,6 +5,7 @@ import uuid
 import warnings
 import threading
 import logging
+import asyncio
 
 logger = logging.getLogger("bidgenius.reader")
 
@@ -12,6 +13,7 @@ from app.tools.pdf_parser import extract_text, extract_text_ocr
 from app.agents.extractor_agent import extract_key_details
 from app.agents.analysis_agent import analyze_tender
 from app.agents.bid_agent import generate_bid
+from app.agents.judge_agent import evaluate_bid
 
 DOWNLOAD_DIR = "downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
@@ -221,6 +223,35 @@ def _process(tender, target_keyword, company_profile):
 
     # Pass company profile to bid writer
     bid = generate_bid(ui, analysis, company_profile=company_profile)
+    proposal = (bid or {}).get("proposal", "")
+
+    # LLM-as-judge review for generated proposal quality.
+    judge_review = {
+        "scores": {},
+        "overall_score": 0,
+        "overall_score_100": 0,
+        "summary": "Judge review skipped",
+        "top_strength": "",
+        "top_improvement": "",
+    }
+    if proposal:
+        try:
+            tender_summary = (
+                f"Title: {title}\n"
+                f"Organization: {ui.get('Organization', 'Refer to PDF')}\n"
+                f"Location: {ui.get('Location', 'Refer to PDF')}\n"
+                f"Bid End Date: {ui.get('Bid End Date', 'Refer to PDF')}\n"
+                f"Estimated Cost: {ui.get('Estimated Cost', 'Refer to PDF')}"
+            )
+            judge_review = asyncio.run(
+                evaluate_bid(
+                    tender_summary=tender_summary,
+                    bid_proposal=proposal,
+                    model_name="gemini",
+                )
+            )
+        except Exception as e:
+            logger.warning(f"  Judge evaluation failed: {e}")
 
     return {
         "tender":   {"title": title, "url": url, "snippet": tender.get("snippet", "")},
@@ -228,4 +259,5 @@ def _process(tender, target_keyword, company_profile):
         "ui_data":  ui,
         "analysis": analysis,
         "bid":      bid,
+        "judge_review": judge_review,
     }
