@@ -46,6 +46,7 @@ class ListRequest(BaseModel):
 
 
 @app.post("/run")
+@app.post("/api/run")
 def run(req: PipelineRequest):
     if not req.keyword:
         raise HTTPException(400, "keyword required")
@@ -66,6 +67,7 @@ def run(req: PipelineRequest):
 
 
 @app.post("/list")
+@app.post("/api/list")
 def list_tenders(req: ListRequest):
     if not req.keyword:
         raise HTTPException(400, "keyword required")
@@ -78,6 +80,7 @@ def list_tenders(req: ListRequest):
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     import importlib
     errors = []
@@ -102,3 +105,9 @@ def health():
         "groq":   bool(os.getenv("GROQ_API_KEY_1")),
         "exa":    bool(os.getenv("EXA_API_KEY")),
     }
+
+
+@app.get("/")
+@app.get("/api")
+def root():
+    return {"service": "BidGenius API", "status": "ok"}
