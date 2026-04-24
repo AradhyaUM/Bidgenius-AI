@@ -1,12 +1,16 @@
 import os
 import re
+import logging
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Dynamically set current year
+CURRENT_YEAR = datetime.now().year
+logger = logging.getLogger("bidgenius.search")
+
 now          = datetime.now()
-CURRENT_YEAR = now.year
 m1 = now.strftime("%B %Y")
 m2 = (now + timedelta(days=30)).strftime("%B %Y")
 m3 = (now + timedelta(days=60)).strftime("%B %Y")
@@ -123,6 +127,7 @@ def _looks_active(snippet):
     if any(x in lower for x in blacklist):
         return False
     years = [int(y) for y in re.findall(r'\b(20\d{2})\b', snippet)]
+    # Allow current year and previous year (to handle financial year 2025-26)
     if years and max(years) < CURRENT_YEAR - 1:
         return False
     return True
@@ -155,8 +160,8 @@ def _exa_search(keyword, region, scope):
                 domains = ["gov.in"] + [p for p in MUNICIPAL_PORTALS if not p.endswith(".gov.in")]
 
         queries = [
-            f"{keyword} tender {region} {CURRENT_YEAR} notice inviting tender",
-            f"{keyword} RFP bid document {region} {CURRENT_YEAR}",
+            f"{keyword} tender {region} notice inviting tender",
+            f"{keyword} bid document {region}",
         ]
 
         results = []
@@ -237,10 +242,10 @@ def _tavily_search(keyword, region, scope):
         closing_terms = '("Last Date" OR "Due Date" OR "Bid End Date" OR "Submission Deadline")'
 
         queries = [
-            f'"{keyword}" {procedural} {region} {CURRENT_YEAR} filetype:pdf',
-            f'"{keyword}" {closing_terms} {region} {CURRENT_YEAR} pdf',
-            f'"{keyword}" ({portal_filter}) {CURRENT_YEAR}',
-            f'"{keyword}" "municipal corporation" {region} {CURRENT_YEAR} tender pdf',
+            f'"{keyword}" {procedural} {region} pdf',
+            f'"{keyword}" {closing_terms} {region} pdf',
+            f'"{keyword}" ({portal_filter})',
+            f'"{keyword}" tender {region} pdf',
         ]
 
         results = []
