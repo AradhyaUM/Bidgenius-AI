@@ -45,7 +45,7 @@ def groq_generate(prompt: str) -> str | None:
         try:
             client = Groq(api_key=GROQ_KEYS[_key_index])
             response = client.chat.completions.create(
-                model="gemma2-9b-it",
+                model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=1500,
                 temperature=0.3,

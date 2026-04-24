@@ -1,7 +1,6 @@
-import ollama
-
 def ollama_generate(prompt: str):
     try:
+        import ollama
         response = ollama.chat(
             model="llama3",
             messages=[
