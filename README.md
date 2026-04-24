@@ -10,7 +10,6 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Groq](https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036)](https://groq.com)
-[![Gemini](https://img.shields.io/badge/Gemini-2.0_Flash-4285F4?logo=google&logoColor=white)](https://aistudio.google.com)
 [![Tavily](https://img.shields.io/badge/Tavily-Search_API-00C853)](https://tavily.com)
 [![Deployed on Vercel](https://img.shields.io/badge/Backend-Vercel-black?logo=vercel)](https://vercel.com)
 [![Streamlit Cloud](https://img.shields.io/badge/Frontend-Streamlit_Cloud-FF4B4B?logo=streamlit)](https://streamlit.io/cloud)
@@ -56,7 +55,7 @@ The project was decomposed into the following modular tasks, each mapping to a d
 | 4 | **Data Validation** | Validator Agent | Extracted JSON | Clean JSON | Type filtering + date sanity + permissive signals |
 | 5 | **Scoring & Analysis** | Analysis Agent | Clean JSON | Score (0-100) + Summary | Weighted rubric: completeness + status + quality |
 | 6 | **Bid Generation** | Bid Agent | Clean JSON + Profile | 5-section proposal | LLM generation with structured fallback |
-| 7 | **Quality Evaluation** | Judge Agent | Proposal + Summary | Rubric scores (1-5) | LLM-as-judge with server-side score recomputation |
+| 7 | **Quality Evaluation** | Judge Agent | Proposal + Summary | Rubric scores (1-5) | LLM-as-judge (Groq) with server-side score recomputation |
 
 ### Pipeline Flow
 
@@ -107,7 +106,7 @@ User Request (keyword, region, company profile)
                            │ Bid proposal
                            ▼
 ┌─── JUDGE AGENT ───────────────────────────────────────┐
-│  Gemini 2.0 Flash evaluates on 5-point rubric         │
+│  LLM evaluates proposal on 5-point rubric              │
 │  Server-side score recomputation (never trust LLM math│)
 │  Output: scores (0-5) + normalized (0-100)            │
 └──────────────────────────┬────────────────────────────-┘
@@ -147,8 +146,8 @@ User Request (keyword, region, company profile)
 | **Backend API** | FastAPI | REST API framework with async support |
 | **Frontend UI** | Streamlit | Interactive dashboard with glassmorphism theme |
 | **AI Brain (Generation)** | Groq · Llama 3.3 70B | Primary LLM for extraction, analysis, and bid generation |
-| **AI Brain (Evaluation)** | Google Gemini 2.0 Flash | LLM-as-Judge for proposal quality scoring |
-| **AI Fallback** | Ollama (local) | Local LLM fallback when cloud APIs are unavailable |
+| **AI Brain (Evaluation)** | Groq · Llama 3.3 70B | LLM-as-Judge for proposal quality scoring |
+| **AI Fallback** | Ollama (local) | Local LLM fallback when Groq is unavailable |
 | **Web Search** | Tavily API | Real-time tender search across government portals |
 | **Semantic Search** | Exa API | Neural search for high-recall tender discovery |
 | **PDF Extraction** | PyMuPDF | Primary fast text extraction from digital PDFs |
@@ -168,7 +167,7 @@ User Request (keyword, region, company profile)
 - **Single LLM call efficiency:** One combined prompt handles field extraction + relevance classification
 - **100-point bid-fit scoring:** Automated scoring based on data completeness, tender status, and content quality
 - **Personalized bid proposals:** 5-section proposals tailored to company name, type, turnover, experience, and certifications
-- **LLM-as-Judge evaluation:** Independent quality scoring with server-side score recomputation
+- **LLM-as-judge evaluation:** Independent quality scoring with server-side score recomputation
 - **Permissive validation:** Prefers to keep uncertain documents rather than risk missing real opportunities
 - **Graceful degradation:** Structured fallback templates when LLM fails; lazy imports prevent crashes on serverless
 - **Region-aware search:** Auto-detects state names and prioritizes relevant state/municipal portals
@@ -243,7 +242,7 @@ Generates personalized bid proposals using the company profile.
 
 ### Agent 7: Judge Agent (`judge_agent.py`)
 
-LLM-as-judge evaluation of generated proposals using Google Gemini.
+LLM-as-judge evaluation of generated proposals.
 
 - **5-criterion rubric (1–5 each):**
   1. Tender Alignment
@@ -262,7 +261,7 @@ LLM-as-judge evaluation of generated proposals using Google Gemini.
 
 - Python 3.11+ (3.12 recommended)
 - API keys: [Groq](https://console.groq.com), [Tavily](https://app.tavily.com), [Exa](https://dashboard.exa.ai)
-- Optional: [Google AI Studio](https://aistudio.google.com/apikey) (for judge agent)
+
 
 ### 1. Clone
 
@@ -301,7 +300,6 @@ TAVILY_API_KEY=tvly-your_tavily_key_here
 
 # Recommended
 EXA_API_KEY=your_exa_key_here
-GEMINI_API_KEY=your_gemini_key_here
 
 # Optional (Windows OCR only)
 POPPLER_PATH=C:\path\to\poppler\bin
@@ -352,7 +350,6 @@ Set environment variables:
 vercel env add GROQ_API_KEY production
 vercel env add TAVILY_API_KEY production
 vercel env add EXA_API_KEY production
-vercel env add GEMINI_API_KEY production
 
 # Redeploy to pick up env vars
 vercel --prod
@@ -403,7 +400,7 @@ Bidgenius-AI/
 │   │   ├── llm/
 │   │   │   ├── llm_router.py        # Groq → Ollama fallback routing
 │   │   │   ├── groq_llm.py          # Groq API client
-│   │   │   ├── gemini_llm.py        # Google Gemini client (lazy import)
+│   │   │   ├── gemini_llm.py        # Optional Gemini client (unused)
 │   │   │   └── ollama_llm.py        # Local Ollama fallback
 │   │   ├── tools/
 │   │   │   ├── tavily_tool.py       # Tavily search wrapper
@@ -487,7 +484,6 @@ Full analysis mode — runs the complete 7-agent pipeline.
 | `GROQ_API_KEY` | [Groq Console](https://console.groq.com) | 14,400 req/day (free) or paid |
 | `TAVILY_API_KEY` | [Tavily Dashboard](https://app.tavily.com) | 1,000 req/month |
 | `EXA_API_KEY` | [Exa Dashboard](https://dashboard.exa.ai) | 1,000 req/month |
-| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) | 15 req/min |
 
 ---
 
@@ -498,7 +494,7 @@ Full analysis mode — runs the complete 7-agent pipeline.
 | **Regex before LLM** | Extracts ~60% of fields without any API call, saving tokens and latency |
 | **Single LLM call per tender** | One combined extraction + relevance prompt instead of multiple calls |
 | **Permissive validator** | False negatives (missing a real tender) are worse than false positives |
-| **Lazy imports** | `fitz`, `google.generativeai`, `ollama` imported only when used — prevents crashes on Vercel |
+| **Lazy imports** | `fitz`, `ollama` imported only when used — prevents crashes on Vercel |
 | **`/tmp` for downloads** | Vercel's filesystem is read-only except `/tmp` |
 | **Structured bid fallback** | If LLM fails, a template-based proposal is generated instead of returning nothing |
 | **Judge recomputes score** | Never trusts the LLM's arithmetic — recomputes the average server-side |
