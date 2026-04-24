@@ -4,7 +4,7 @@ import streamlit as st
 
 
 # Backend URLs
-RAILWAY_URL = "https://bidgenius-production.up.railway.app/api" # Update this once you have the actual URL
+RAILWAY_URL = "https://bidgenius-production.up.railway.app/api"
 VERCEL_URL = "https://bidgen-api.vercel.app/api"
 
 if "backend_url" not in st.session_state:
