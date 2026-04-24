@@ -3,7 +3,7 @@ import requests
 import streamlit as st
 
 
-API_BASE_URL = "https://bidgenius-ai.vercel.app/api"
+API_BASE_URL = "https://bidgen-api.vercel.app/api"
 COMPANY_TYPES = [
     "Construction / Civil",
     "IT Services",

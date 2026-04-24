@@ -15,7 +15,7 @@ from app.agents.analysis_agent import analyze_tender
 from app.agents.bid_agent import generate_bid
 from app.agents.judge_agent import evaluate_bid
 
-DOWNLOAD_DIR = "downloads"
+DOWNLOAD_DIR = os.path.join("/tmp", "downloads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 PDF_DOWNLOAD_TIMEOUT = 15

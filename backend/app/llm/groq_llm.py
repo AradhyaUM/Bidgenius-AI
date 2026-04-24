@@ -29,7 +29,7 @@ GROQ_KEYS = [
 ]
 
 if not GROQ_KEYS:
-    raise ValueError("No GROQ_API_KEY_* found in environment")
+    logger.warning("No GROQ_API_KEY_* found in environment — LLM calls will fail")
 
 _key_index = 0
 

@@ -1,6 +1,6 @@
+# judge_agent.py — v2 (deployed 2026-04-25)
 import json
 from typing import Dict, Any
-from app.llm.llm_router import get_llm_client
 
 
 JUDGE_SYSTEM_PROMPT = """You are a senior Government Tender Evaluator. Your job is to score AI-generated bid proposals against a structured rubric.
@@ -103,11 +103,8 @@ async def evaluate_bid(
     # Retry logic
     for _ in range(2):
         try:
-            response = await get_llm_client(model_name).generate(
-                system_prompt=JUDGE_SYSTEM_PROMPT,
-                prompt=prompt,
-                response_format="json"
-            )
+            from app.llm.gemini_llm import gemini_generate
+            response = gemini_generate(JUDGE_SYSTEM_PROMPT + "\n\n" + prompt)
 
             result = _safe_parse(response)
 

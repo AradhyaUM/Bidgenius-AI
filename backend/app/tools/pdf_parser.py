@@ -1,4 +1,7 @@
-import fitz  # PyMuPDF
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fitz = None
 import os
 import shutil
 
