@@ -124,7 +124,7 @@ User Request (keyword, region, company profile)
 | **Frontend** | [bidgenius-ai.streamlit.app](https://bidgenius-ai.streamlit.app) |
 | **Backend API** | [bidgen-api.vercel.app/api](https://bidgen-api.vercel.app/api) |
 | **Health Check** | [bidgen-api.vercel.app/api/health](https://bidgen-api.vercel.app/api/health) |
-| **Demo Video** | [Loom Recording](#) |
+| **Demo Video** | [Loom Recording](https://www.loom.com/share/278a28f81c304b1cb4424ad793d7543a) |
 
 ---
 
@@ -508,7 +508,7 @@ Full analysis mode — runs the complete 7-agent pipeline.
 | Role | Member | Responsibilities |
 |------|--------|-----------------|
 | **Role A: Architect & AI Lead** | [Aradhya UM](https://github.com/AradhyaUM) | System architecture, multi-agent pipeline design, LLM integration (Groq + Gemini), search agent, extractor agent, judge agent, deployment infrastructure |
-| **Role B: Builder & Frontend Lead** | [Uday Mendulkar](https://github.com/udaymendulkar) | Frontend development (Streamlit UI), reader agent, PDF parsing pipeline, bid agent, validator agent, testing & debugging |
+| **Role B: Builder & Frontend Lead** | [Ishaan Jaiswal](https://github.com/Jaiswal05Ishan) | Frontend development (Streamlit UI), reader agent, PDF parsing pipeline, bid agent, validator agent, testing & debugging |
 
 ---
 
@@ -520,6 +520,6 @@ This project is for educational and demonstration purposes.
 
 <div align="center">
 
-**Built with ❤️ by [Aradhya UM](https://github.com/AradhyaUM) & [Uday Mendulkar](https://github.com/udaymendulkar)**
+**Built with ❤️ by [Aradhya UM](https://github.com/AradhyaUM) & [Ishaan Jaiswal](https://github.com/Jaiswal05Ishan)**
 
 </div>
