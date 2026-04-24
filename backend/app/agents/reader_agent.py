@@ -247,7 +247,6 @@ def _process(tender, target_keyword, company_profile):
                 evaluate_bid(
                     tender_summary=tender_summary,
                     bid_proposal=proposal,
-                    model_name="gemini",
                 )
             )
         except Exception as e:

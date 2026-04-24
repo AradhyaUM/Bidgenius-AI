@@ -103,8 +103,8 @@ async def evaluate_bid(
     # Retry logic
     for _ in range(2):
         try:
-            from app.llm.gemini_llm import gemini_generate
-            response = gemini_generate(JUDGE_SYSTEM_PROMPT + "\n\n" + prompt)
+            from app.llm.llm_router import generate
+            response = generate(JUDGE_SYSTEM_PROMPT + "\n\n" + prompt)
 
             result = _safe_parse(response)
 

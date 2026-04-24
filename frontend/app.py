@@ -3,7 +3,13 @@ import requests
 import streamlit as st
 
 
-API_BASE_URL = "https://bidgen-api.vercel.app/api"
+# Backend URLs
+RAILWAY_URL = "https://bidgenius-production.up.railway.app/api" # Update this once you have the actual URL
+VERCEL_URL = "https://bidgen-api.vercel.app/api"
+
+if "backend_url" not in st.session_state:
+    st.session_state.backend_url = RAILWAY_URL
+
 COMPANY_TYPES = [
     "Construction / Civil",
     "IT Services",
@@ -28,6 +34,27 @@ st.set_page_config(
     page_icon="📑",
     initial_sidebar_state="expanded",
 )
+
+# Sidebar Configuration
+with st.sidebar:
+    st.image("https://img.icons8.com/fluency/96/artificial-intelligence.png", width=80)
+    st.title("Settings")
+    
+    # Backend Selector
+    backend_mode = st.radio(
+        "Backend Engine",
+        ["Railway (Primary - Unlimited)", "Vercel (Backup - 10s Limit)"],
+        index=0,
+        help="Use Railway for Full Analysis. Vercel is good for quick lists."
+    )
+    
+    if "Railway" in backend_mode:
+        st.session_state.backend_url = RAILWAY_URL
+    else:
+        st.session_state.backend_url = VERCEL_URL
+
+    st.divider()
+
 
 
 def escape_text(value, fallback="—"):
@@ -853,7 +880,7 @@ if run and keyword.strip():
         status.info(f"Finding tender leads for '{keyword}' in '{region}'...")
         try:
             response = requests.post(
-                f"{API_BASE_URL}/list",
+                f"{st.session_state.backend_url}/list",
                 json={"keyword": keyword, "region": region},
                 timeout=60,
             )
@@ -916,7 +943,7 @@ if run and keyword.strip():
 
         try:
             response = requests.post(
-                f"{API_BASE_URL}/run",
+                f"{st.session_state.backend_url}/run",
                 json={
                     "keyword": keyword,
                     "region": region,

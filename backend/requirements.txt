@@ -5,6 +5,8 @@ exa-py
 tavily-python
 fastapi
 python-dotenv
+uvicorn
+python-multipart
 pydantic
 requests
 PyMuPDF
