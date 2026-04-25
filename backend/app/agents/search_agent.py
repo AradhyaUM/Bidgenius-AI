@@ -127,8 +127,8 @@ def _looks_active(snippet):
     if any(x in lower for x in blacklist):
         return False
     years = [int(y) for y in re.findall(r'\b(20\d{2})\b', snippet)]
-    # Stricter: Only allow current year and future years
-    if years and max(years) < CURRENT_YEAR:
+    # Allow current year and previous year (to handle financial years and overlaps)
+    if years and max(years) < CURRENT_YEAR - 1:
         return False
     return True
 

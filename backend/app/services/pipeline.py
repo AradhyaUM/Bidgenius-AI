@@ -36,8 +36,8 @@ def _decide_active(output):
             return True, f"Active until {end_str}"
 
     tid_year = _tender_id_year(raw.get("Tender ID"))
-    if tid_year and tid_year < now.year:
-        return False, f"Tender ID year {tid_year} is past"
+    if tid_year and tid_year < now.year - 1:
+        return False, f"Tender ID year {tid_year} is too old"
 
     title   = output.get("tender", {}).get("title", "")
     snippet = output.get("tender", {}).get("snippet", "")
