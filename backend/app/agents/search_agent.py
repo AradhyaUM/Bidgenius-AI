@@ -241,10 +241,12 @@ def _tavily_search(keyword, region, scope):
         procedural    = '(NIT OR RFP OR RFQ OR EOI OR "Notice Inviting Tender")'
         closing_terms = '("Last Date" OR "Due Date" OR "Bid End Date" OR "Submission Deadline")'
 
+        # Force search for future-dated tenders
+        future_months = '(May OR June OR July OR August) 2026'
         queries = [
-            f'"{keyword}" (tender OR NIT OR RFP) {region} (2025 OR 2026) active pdf',
-            f'"{keyword}" ({portal_filter}) (2025 OR 2026) active pdf',
-            f'"{keyword}" "last date" (2025 OR 2026) {region} pdf',
+            f'"{keyword}" (tender OR NIT OR RFP) {region} {future_months} pdf -recruitment -vacancy',
+            f'"{keyword}" ({portal_filter}) (2026) "last date" pdf -hiring',
+            f'"{keyword}" (EPC OR HAM OR BOT OR "Civil Works") {region} 2026 pdf',
         ]
 
         results = []
