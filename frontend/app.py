@@ -711,8 +711,7 @@ def render_result_header(title, status_class, status_label, score, difficulty, c
         '<span class="badge badge-corr">Corrigendum</span>' if is_corrigendum else ""
     )
     category_text = escape_text(category, "General")
-    st.markdown(
-        textwrap.dedent(f"""
+    return textwrap.dedent(f"""
         <div class="result-shell">
             <div class="result-topline">
                 <div>
@@ -734,9 +733,7 @@ def render_result_header(title, status_class, status_label, score, difficulty, c
                 </div>
             </div>
         </div>
-        """),
-        unsafe_allow_html=True,
-    )
+    """).strip()
 
 
 def render_detail_cards(rows):
@@ -1022,7 +1019,7 @@ if run and keyword.strip():
                 status_label = "Status Unknown"
 
             score = normalize_score(analysis.get("score", 0))
-            render_result_header(
+            header_html = render_result_header(
                 title=tender.get("title", "Untitled tender"),
                 status_class=status_class,
                 status_label=status_label,
@@ -1031,6 +1028,7 @@ if run and keyword.strip():
                 category=raw.get("primary_category", "General"),
                 is_corrigendum=raw.get("is_corrigendum"),
             )
+            st.markdown(header_html, unsafe_allow_html=True)
 
             metric_a, metric_b, metric_c, metric_d = st.columns(4)
             metric_a.metric("Tender fee", ui.get("Tender Fee", "—"))
@@ -1044,22 +1042,22 @@ if run and keyword.strip():
             emd = raw.get("EMD")
             if tender_fee and emd:
                 st.markdown(
-                    f"""
+                    textwrap.dedent(f"""
                     <div class="fee-note">
                         Upfront document fee: <strong>{escape_text(ui.get("Tender Fee"))}</strong>
                         &nbsp;&nbsp;|&nbsp;&nbsp;
                         Refundable bid security: <strong>{escape_text(ui.get("EMD"))}</strong>
                     </div>
-                    """,
+                    """).strip(),
                     unsafe_allow_html=True,
                 )
             elif emd:
                 st.markdown(
-                    f"""
+                    textwrap.dedent(f"""
                     <div class="fee-note">
                         Refundable bid security required: <strong>{escape_text(ui.get("EMD"))}</strong>
                     </div>
-                    """,
+                    """).strip(),
                     unsafe_allow_html=True,
                 )
 

@@ -282,7 +282,10 @@ def _tavily_search(keyword, region, scope):
                         "source":    "tavily",
                     })
             except Exception as e:
-                print(f"   ❌ Tavily query error: {e}")
+                if "usage limit" in str(e).lower():
+                    print(f"   ⚠️ Tavily usage limit hit — falling back to Exa for search")
+                else:
+                    print(f"   ❌ Tavily query error: {e}")
 
         print(f"   ✅ Tavily: {len(results)} results")
         return results

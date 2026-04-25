@@ -134,7 +134,7 @@ def tavily_extract_pdf(url):
 
         response = client.extract(
             urls=[url],
-            extract_depth="advanced",
+            extract_depth="basic",
         )
 
         results = response.get("results", [])
