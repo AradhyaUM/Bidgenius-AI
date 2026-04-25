@@ -261,7 +261,14 @@ def _tavily_search(keyword, region, scope):
                     snippet = r.get("content", "")
                     if url in seen:
                         continue
-                    if ".pdf" not in url.lower() and "DownloadFile" not in url:
+                    # Allow PDFs, download links, and known govt portal pages
+                    is_pdf_url = ".pdf" in url.lower() or "DownloadFile" in url
+                    is_portal = any(p in url.lower() for p in [
+                        "eprocure.gov.in", "gem.gov.in", "gov.in/tender",
+                        "gov.in/nit", "etender", "eproc", "tenders.",
+                        "nhai.gov.in", "ireps.gov.in",
+                    ])
+                    if not is_pdf_url and not is_portal:
                         continue
                     if not _looks_active(snippet):
                         print(f"   ⏭ Stale: {r.get('title','')[:50]}")
@@ -272,7 +279,7 @@ def _tavily_search(keyword, region, scope):
                         "url":       url,
                         "snippet":   snippet,
                         "full_text": "",
-                        "is_pdf":    True,
+                        "is_pdf":    is_pdf_url,
                         "source":    "tavily",
                     })
             except Exception as e:
@@ -288,17 +295,23 @@ def _tavily_search(keyword, region, scope):
 def search_tenders(keyword, region, scope="all"):
     print(f"\n🔍 Dual search: '{keyword}' | '{region}' | [{scope}]")
 
-    exa_results    = _exa_search(keyword, region, scope)
+    # Tavily first — it can crawl and index PDFs
     tavily_results = _tavily_search(keyword, region, scope)
+    exa_results    = _exa_search(keyword, region, scope)
 
+    # Tavily gets dedup priority (comes first in merge loop)
     seen, merged = set(), []
-    for r in exa_results + tavily_results:
+    for r in tavily_results + exa_results:
         url = r.get("url", "")
         if url and url not in seen:
             seen.add(url)
             merged.append(r)
 
-    merged.sort(key=lambda x: len(x.get("full_text", "")), reverse=True)
+    # Sort: Tavily PDFs first (actual tender docs), then by text length
+    merged.sort(key=lambda x: (
+        0 if x.get("source") == "tavily" and x.get("is_pdf") else 1,
+        -len(x.get("full_text", ""))
+    ))
 
     print(f"\n✅ Combined: {len(merged)} unique "
           f"({sum(1 for r in merged if r['source']=='exa')} Exa / "

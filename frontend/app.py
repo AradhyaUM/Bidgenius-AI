@@ -741,11 +741,13 @@ def render_result_header(title, status_class, status_label, score, difficulty, c
 def render_detail_cards(rows):
     cards = []
     for label, value in rows.items():
+        # Truncate long garbage values from extraction
+        display_val = truncate_text(value, 80) if value and len(str(value)) > 80 else escape_text(value)
         cards.append(
             f"""
             <div class="detail-card">
                 <div class="detail-label">{escape_text(label)}</div>
-                <div class="detail-value">{escape_text(value)}</div>
+                <div class="detail-value">{display_val}</div>
             </div>
             """
         )

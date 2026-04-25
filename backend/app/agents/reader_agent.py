@@ -111,12 +111,52 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'Page \d+ of \d+', '', text, flags=re.IGNORECASE)
     text = re.sub(r'\f', ' ', text)
-    text = text.replace("â€™", "'").replace("â€œ", '"').replace("â€", '"')
+    text = text.replace("\xe2\x80\x99", "'").replace("\xe2\x80\x9c", '"').replace("\xe2\x80\x9d", '"')
     text = text.replace("\x00", "")
     return text.strip()
 
 
-def read_tender(url):
+# ── TAVILY EXTRACT — reads PDFs from URLs directly (no download needed) ───────
+def tavily_extract_pdf(url):
+    """Use Tavily's extract API to read PDF content from a URL.
+    This is the primary method — no local download, no OCR, works on Railway."""
+    try:
+        from tavily import TavilyClient
+        api_key = os.getenv("TAVILY_API_KEY")
+        if not api_key:
+            logger.warning("  No TAVILY_API_KEY — skipping Tavily extract")
+            return None
+
+        client = TavilyClient(api_key=api_key)
+        logger.info(f"  Tavily extract: {url[:80]}")
+
+        response = client.extract(
+            urls=[url],
+            extract_depth="advanced",
+        )
+
+        results = response.get("results", [])
+        if not results:
+            logger.info("  Tavily extract returned no results")
+            return None
+
+        raw_content = results[0].get("raw_content", "")
+        if raw_content and len(raw_content) >= 200:
+            logger.info(f"  ✅ Tavily extract: {len(raw_content):,} chars")
+            return raw_content
+
+        logger.info(f"  Tavily extract: content too short ({len(raw_content or '')} chars)")
+        return None
+
+    except Exception as e:
+        logger.warning(f"  Tavily extract failed: {e}")
+        return None
+
+
+# ── LOCAL PDF DOWNLOAD + PARSE (fallback) ─────────────────────────────────────
+def read_tender_local(url):
+    """Download PDF and extract text locally with PyMuPDF/OCR.
+    Used as fallback when Tavily extract fails."""
     pdf_path = None
     try:
         pdf_path = download_pdf(url)
@@ -125,11 +165,11 @@ def read_tender(url):
         text = extract_text(pdf_path)
         if not text or len(text) < 200:
             if os.path.getsize(pdf_path) < 5_000_000:
-                logger.info("Trying OCR...")
+                logger.info("  Trying OCR...")
                 text = extract_text_ocr(pdf_path)
         return clean_text(text) if text and len(text) >= 100 else None
     except Exception as e:
-        logger.error(f"Reader error: {e}")
+        logger.error(f"  Local reader error: {e}")
         return None
     finally:
         if pdf_path and os.path.exists(pdf_path):
@@ -139,9 +179,23 @@ def read_tender(url):
                 pass
 
 
+def read_tender(url):
+    """Read tender document from URL.
+    Strategy: Tavily extract first (reads PDFs via API), then local download."""
+    # Method 1: Tavily extract — reads PDFs from URL, no download needed
+    text = tavily_extract_pdf(url)
+    if text:
+        return clean_text(text)
+
+    # Method 2: Local download + PyMuPDF/OCR
+    logger.info("  Falling back to local PDF download + parse")
+    return read_tender_local(url)
+
+
 def sanitize_for_display(details):
     ui = {}
     money_fields = {"EMD", "Tender Fee", "Estimated Cost", "Turnover"}
+    text_fields = {"Organization", "Ministry", "Location"}
     for k, v in details.items():
         if v is None or str(v).strip() in ("", "None", "null"):
             ui[k] = "Refer to PDF"
@@ -154,6 +208,10 @@ def sanitize_for_display(details):
                 else:                   ui[k] = f"₹{n:,}"
             except (ValueError, TypeError):
                 ui[k] = "Refer to PDF"
+        elif k in text_fields:
+            # Truncate long extracted text to prevent garbage in UI
+            text = str(v).strip()
+            ui[k] = text[:80] + "..." if len(text) > 80 else text
         else:
             ui[k] = v
     return ui
@@ -187,11 +245,22 @@ def _process(tender, target_keyword, company_profile):
     title = tender.get("title", "Unknown")
     logger.info(f"  {title[:70]}")
 
+    is_pdf = tender.get("is_pdf", False) or ".pdf" in url.lower()
     full_text = tender.get("full_text", "")
-    if full_text and len(full_text) > 500:
-        logger.info(f"  Using Exa text ({len(full_text):,} chars)")
+
+    if is_pdf:
+        # For PDFs: use Tavily extract (primary) → local download (fallback)
+        # Exa full_text is web page metadata, not actual PDF content
+        logger.info(f"  PDF URL detected — reading via Tavily extract + local fallback")
+        text = read_tender(url)
+        if not text and full_text and len(full_text) > 500:
+            logger.info(f"  All methods failed — last resort: Exa text ({len(full_text):,} chars)")
+            text = clean_text(full_text)
+    elif full_text and len(full_text) > 500:
+        logger.info(f"  Using Exa text for non-PDF URL ({len(full_text):,} chars)")
         text = clean_text(full_text)
     else:
+        # Non-PDF URL with no Exa text — try Tavily extract anyway
         text = read_tender(url)
 
     if not text:
