@@ -1,6 +1,7 @@
 import html
 import requests
 import streamlit as st
+import textwrap
 
 
 # Backend URLs
@@ -636,7 +637,7 @@ def render_hero(mode, scope):
     )
     scope_copy = SCOPE_OPTIONS.get(scope, "All portals")
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="glass-shell hero-shell">
             <div class="hero-grid">
                 <div>
@@ -670,7 +671,7 @@ def render_hero(mode, scope):
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -711,7 +712,7 @@ def render_result_header(title, status_class, status_label, score, difficulty, c
     )
     category_text = escape_text(category, "General")
     st.markdown(
-        f"""
+        textwrap.dedent(f"""
         <div class="result-shell">
             <div class="result-topline">
                 <div>
@@ -733,7 +734,7 @@ def render_result_header(title, status_class, status_label, score, difficulty, c
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -742,14 +743,14 @@ def render_detail_cards(rows):
     cards = []
     for label, value in rows.items():
         # Truncate long garbage values from extraction
-        display_val = truncate_text(value, 80) if value and len(str(value)) > 80 else escape_text(value)
+        display_val = truncate_text(value, 120) if value and len(str(value)) > 120 else escape_text(value)
         cards.append(
-            f"""
+            textwrap.dedent(f"""
             <div class="detail-card">
                 <div class="detail-label">{escape_text(label)}</div>
                 <div class="detail-value">{display_val}</div>
             </div>
-            """
+            """).strip()
         )
     st.markdown(f'<div class="detail-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
 

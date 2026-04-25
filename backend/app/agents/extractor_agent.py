@@ -280,7 +280,10 @@ def _llm_call(text, missing_fields, target_keyword, mode="relevance"):
         prompt = f"""You are an Indian government tender analyst.
 
 TASK 1 — RELEVANCE: Is this document primarily about "{target_keyword}"?
-Set is_relevant = true only if the main work/subject matches. false if it's a different category that just mentions the word.
+Set is_relevant = false if:
+- The main work/subject doesn't match "{target_keyword}"
+- The document is clearly from before 2024 (e.g., 2018, 2021)
+- It's a general policy document or old archive
 
 TASK 2 — EXTRACT MISSING FIELDS ONLY:
 {fields_section}
@@ -288,14 +291,15 @@ TASK 2 — EXTRACT MISSING FIELDS ONLY:
 Return ONLY a raw JSON object (no markdown, no backticks):
 {{
   "is_relevant": true or false,
-  "primary_category": "3-5 word description of actual work",
+  "primary_category": "3-5 word concise description",
   {chr(10).join(f'  "{f}": null' for f in (critical_missing or []))}
 }}
 
 Rules:
+- Organization/Ministry/Location: Extract ONLY the proper name. DO NOT include addresses or long sentences. Max 8 words.
 - Tender Fee = small NON-REFUNDABLE doc fee (Rs 500–50,000). Label: "Tender Processing Fee", "Document Fee"
-- EMD = LARGER REFUNDABLE deposit (usually lakhs). Label: "Tender Security", "Bid Security", "बयाना राशि", "इसारा रक्कम"
-- Dates: DD-MM-YYYY only. Reject financial years like "2025-26"
+- EMD = LARGER REFUNDABLE deposit (usually lakhs). Label: "Tender Security", "Bid Security"
+- Dates: DD-MM-YYYY only. Reject financial years like "2025-26". If multiple dates exist, find "Submission Last Date".
 - Money: digits only (4173000 for Rs 41.73 Lakh)
 - null if not found — never guess
 

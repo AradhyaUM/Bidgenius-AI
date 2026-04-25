@@ -108,7 +108,9 @@ def download_pdf(url):
 def clean_text(text):
     if not text:
         return ""
-    text = re.sub(r'\s+', ' ', text)
+    # Collapse multiple spaces but preserve single newlines
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n\s*\n', '\n', text)
     text = re.sub(r'Page \d+ of \d+', '', text, flags=re.IGNORECASE)
     text = re.sub(r'\f', ' ', text)
     text = text.replace("\xe2\x80\x99", "'").replace("\xe2\x80\x9c", '"').replace("\xe2\x80\x9d", '"')

@@ -127,8 +127,8 @@ def _looks_active(snippet):
     if any(x in lower for x in blacklist):
         return False
     years = [int(y) for y in re.findall(r'\b(20\d{2})\b', snippet)]
-    # Allow current year and previous year (to handle financial year 2025-26)
-    if years and max(years) < CURRENT_YEAR - 1:
+    # Stricter: Only allow current year and future years
+    if years and max(years) < CURRENT_YEAR:
         return False
     return True
 
@@ -242,10 +242,9 @@ def _tavily_search(keyword, region, scope):
         closing_terms = '("Last Date" OR "Due Date" OR "Bid End Date" OR "Submission Deadline")'
 
         queries = [
-            f'"{keyword}" {procedural} {region} pdf',
-            f'"{keyword}" {closing_terms} {region} pdf',
-            f'"{keyword}" ({portal_filter})',
-            f'"{keyword}" tender {region} pdf',
+            f'"{keyword}" (tender OR NIT OR RFP) {region} (2025 OR 2026) active pdf',
+            f'"{keyword}" ({portal_filter}) (2025 OR 2026) active pdf',
+            f'"{keyword}" "last date" (2025 OR 2026) {region} pdf',
         ]
 
         results = []
@@ -338,17 +337,21 @@ def get_active_tenders_list(keyword, region, scope="all", max_results=15):
         seen, results = set(), []
         for query in queries:
             try:
-                resp = client.search(query=query, max_results=10)
+                resp = client.search(query=query, max_results=15)
                 for r in resp.get("results", []):
                     url = r.get("url", "")
-                    if url in seen or not _looks_active(r.get("content", "")):
+                    if url in seen:
+                        continue
+                    # Quick snippet check for year
+                    snippet = r.get("content", "")
+                    if not _looks_active(snippet):
                         continue
                     seen.add(url)
                     results.append({
                         "title":   r.get("title", "Untitled"),
                         "url":     url,
-                        "snippet": r.get("content", ""),
-                        "is_pdf":  ".pdf" in url.lower(),
+                        "snippet": snippet,
+                        "is_pdf":  ".pdf" in url.lower() or "DownloadFile" in url,
                     })
             except Exception:
                 pass
