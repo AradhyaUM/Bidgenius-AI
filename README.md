@@ -508,7 +508,7 @@ Full analysis mode — runs the complete 7-agent pipeline.
 | Role | Member | Responsibilities |
 |------|--------|-----------------|
 | **Role A: Architect & AI Lead** | [Aradhya UM](https://github.com/AradhyaUM) | System architecture, multi-agent pipeline design, LLM integration (Groq + Gemini), search agent, extractor agent, judge agent, deployment infrastructure |
-| **Role B: Builder & Frontend Lead** | [Ishaan Jaiswal](https://github.com/Jaiswal05Ishan) | Frontend development (Streamlit UI), reader agent, PDF parsing pipeline, bid agent, validator agent, testing & debugging |
+| **Role B: Builder & Frontend Lead** | [Ishan Jaiswal](https://github.com/Jaiswal05Ishan) | Frontend development (Streamlit UI), reader agent, PDF parsing pipeline, bid agent, validator agent, testing & debugging |
 
 ---
 
@@ -520,6 +520,6 @@ This project is for educational and demonstration purposes.
 
 <div align="center">
 
-**Built with ❤️ by [Aradhya UM](https://github.com/AradhyaUM) & [Ishaan Jaiswal](https://github.com/Jaiswal05Ishan)**
+**Built with ❤️ by [Aradhya UM](https://github.com/AradhyaUM) & [Ishan Jaiswal](https://github.com/Jaiswal05Ishan)**
 
 </div>
